@@ -55,6 +55,8 @@ before_install:
         findAndReplace Adafruit_WINC1500Udp WiFiUdp $EXAMPLE_SKETCH;
       fi
 
+      cat $BOARD $EXAMPLE_SKETCH;
+
       arduino --verbose-build --verify --board $BOARD $EXAMPLE_SKETCH;
     }
 install:
