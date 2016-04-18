@@ -33,14 +33,16 @@ before_install:
   - arduino --install-library "Adafruit Unified Sensor"
   - findAndReplace() { sed -i '' -e "s|$1|$2|g" "$3"; }
   - buildExampleSketch() {
-      EXAMPLE_SKETCH=$PWD/examples/$1/$1.ino;
+      export EXAMPLE_SKETCH=$PWD/examples/$1/$1.ino;
+
+      echo $EXAMPLE_SKETCH;
 
       if [[ "$BOARD" =~ "arduino:samd:" ]]; then
         findAndReplace "Adafruit_WINC1500 WiFi" "//Adafruit_WINC1500 WiFi" $EXAMPLE_SKETCH;
 
-        findAndReplace Adafruit_WINC1500 WiFi101 $EXAMPLE_SKETCH;
-        findAndReplace Adafruit_WINC1500SSLClient WiFiSSLClient $EXAMPLE_SKETCH;
         findAndReplace Adafruit_WINC1500Udp WiFiUdp $EXAMPLE_SKETCH;
+        findAndReplace Adafruit_WINC1500SSLClient WiFiSSLClient $EXAMPLE_SKETCH;
+        findAndReplace Adafruit_WINC1500 WiFi101 $EXAMPLE_SKETCH;        
       fi
 
       if [[ "$BOARD" =~ "esp8266:esp8266:" ]]; then
@@ -50,12 +52,12 @@ before_install:
         findAndReplace WiFiSSLClient WiFiClientSecure $EXAMPLE_SKETCH;
         findAndReplace WiFiUdp WiFiUdp $EXAMPLE_SKETCH;
 
-        findAndReplace Adafruit_WINC1500 ESP8266WiFi $EXAMPLE_SKETCH;
-        findAndReplace Adafruit_WINC1500SSLClient WiFiClientSecure $EXAMPLE_SKETCH;
         findAndReplace Adafruit_WINC1500Udp WiFiUdp $EXAMPLE_SKETCH;
+        findAndReplace Adafruit_WINC1500SSLClient WiFiClientSecure $EXAMPLE_SKETCH;
+        findAndReplace Adafruit_WINC1500 ESP8266WiFi $EXAMPLE_SKETCH;        
       fi
 
-      cat $BOARD $EXAMPLE_SKETCH;
+      cat $EXAMPLE_SKETCH;
 
       arduino --verbose-build --verify --board $BOARD $EXAMPLE_SKETCH;
     }
