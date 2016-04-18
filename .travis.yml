@@ -22,15 +22,13 @@ before_install:
       arduino --install-boards arduino:samd;
       arduino --install-library WiFi101;
       arduino --install-library RTCZero;
-      arduino --install-library "Adafruit BME280 Library";
     fi
   - if [[ "$BOARD" =~ "esp8266:esp8266:" ]]; then
       arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json" --install-boards esp8266:esp8266;
       arduino --pref "boardsmanager.additional.urls=" --save-prefs;
-      arduino --install-library "DHT sensor library";
-      arduino --install-library "Adafruit DHT Unified";
     fi
   - arduino --install-library "Adafruit Unified Sensor"
+  - arduino --install-library "Adafruit BME280 Library";
   - mkdir -p $HOME/Arduino/libraries
   - git clone https://github.com/arduino-libraries/NTPClient.git $HOME/Arduino/libraries/NTPClient
   - findAndReplace() { sed -i '' -e "s|$1|$2|g" "$3"; }
@@ -43,6 +41,7 @@ before_install:
         findAndReplace "Adafruit_WINC1500 WiFi" "//Adafruit_WINC1500 WiFi" $EXAMPLE_SKETCH;
 
         findAndReplace Adafruit_WINC1500Udp WiFiUdp $EXAMPLE_SKETCH;
+        findAndReplace Adafruit_WINC1500UDP WiFiUDP $EXAMPLE_SKETCH;
         findAndReplace Adafruit_WINC1500SSLClient WiFiSSLClient $EXAMPLE_SKETCH;
         findAndReplace Adafruit_WINC1500 WiFi101 $EXAMPLE_SKETCH;        
       fi
@@ -55,6 +54,7 @@ before_install:
         findAndReplace WiFiUdp WiFiUdp $EXAMPLE_SKETCH;
 
         findAndReplace Adafruit_WINC1500Udp WiFiUdp $EXAMPLE_SKETCH;
+        findAndReplace Adafruit_WINC1500UDP WiFiUDP $EXAMPLE_SKETCH;
         findAndReplace Adafruit_WINC1500SSLClient WiFiClientSecure $EXAMPLE_SKETCH;
         findAndReplace Adafruit_WINC1500 ESP8266WiFi $EXAMPLE_SKETCH;        
       fi
