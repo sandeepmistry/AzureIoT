@@ -31,6 +31,8 @@ before_install:
       arduino --install-library "Adafruit DHT Unified";
     fi
   - arduino --install-library "Adafruit Unified Sensor"
+  - mkdir -p $HOME/Arduino/libraries
+  - git clone https://github.com/arduino-libraries/NTPClient.git $HOME/Arduino/libraries/NTPClient
   - findAndReplace() { sed -i '' -e "s|$1|$2|g" "$3"; }
   - buildExampleSketch() {
       export EXAMPLE_SKETCH=$PWD/examples/$1/$1.ino;
@@ -62,7 +64,6 @@ before_install:
       arduino --verbose-build --verify --board $BOARD $EXAMPLE_SKETCH;
     }
 install:
-  - mkdir -p $HOME/Arduino/libraries
   - ln -s $PWD $HOME/Arduino/libraries/.
 script:
   - buildExampleSketch command_center
