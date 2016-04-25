@@ -19,7 +19,7 @@ before_install:
   - mv arduino-$IDE_VERSION $HOME/arduino-ide
   - export PATH=$PATH:$HOME/arduino-ide
   - arduino --board arduino:avr:uno --save-prefs
-  - arduino --install-library "NTPClient"
+  - arduino --install-library "NTPClient:3.0.0"
   - if [[ "$BOARD" =~ "arduino:samd:" ]]; then
       arduino --install-boards arduino:samd;
       arduino --install-library WiFi101;
