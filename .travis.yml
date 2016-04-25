@@ -18,8 +18,6 @@ before_install:
   - tar xf arduino-$IDE_VERSION-linux64.tar.xz
   - mv arduino-$IDE_VERSION $HOME/arduino-ide
   - export PATH=$PATH:$HOME/arduino-ide
-  - arduino --board arduino:avr:uno --save-prefs
-  - arduino --install-library "NTPClient:3.0.0"
   - if [[ "$BOARD" =~ "arduino:samd:" ]]; then
       arduino --install-boards arduino:samd;
       arduino --install-library WiFi101;
@@ -29,6 +27,7 @@ before_install:
       arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json" --install-boards esp8266:esp8266;
       arduino --pref "boardsmanager.additional.urls=" --save-prefs;
     fi
+  - arduino --board arduino:avr:uno --install-library "NTPClient:3.0.0"
   - findAndReplace() { sed -i'' -e"s|$1|$2|g" "$3"; }
   - buildExampleSketch() {
       EXAMPLE_SKETCH=$PWD/examples/$1/$1.ino;
