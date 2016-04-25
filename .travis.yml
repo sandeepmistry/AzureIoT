@@ -22,12 +22,13 @@ before_install:
       arduino --install-boards arduino:samd;
       arduino --install-library WiFi101;
       arduino --install-library RTCZero;
+      arduino --install-library NTPClient;
     fi
   - if [[ "$BOARD" =~ "esp8266:esp8266:" ]]; then
       arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json" --install-boards esp8266:esp8266;
+      arduino --install-library NTPClient;
       arduino --pref "boardsmanager.additional.urls=" --save-prefs;
     fi
-  - arduino --board arduino:avr:uno --install-library "NTPClient:3.0.0"
   - findAndReplace() { sed -i'' -e"s|$1|$2|g" "$3"; }
   - buildExampleSketch() {
       EXAMPLE_SKETCH=$PWD/examples/$1/$1.ino;
