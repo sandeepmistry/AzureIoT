@@ -4,20 +4,18 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <ArduinoHttpClient.h>
+
 #include "sdk/httpapi.h"
 #include "iot_logging.h"
 
 #include "AzureIoTHubClient.h"
-#include "util/HTTPSClient.h"
 
 
-HTTPSClient* httpsClient = NULL;
+HttpClient* httpsClient = NULL;
 
 HTTPAPI_RESULT HTTPAPI_Init(void)
 {
-    httpsClient = new HTTPSClient(AzureIoTHubClient::sslClient);
-    httpsClient->setTimeout(10000);
-
     return HTTPAPI_OK;
 }
 
@@ -27,26 +25,27 @@ void HTTPAPI_Deinit(void)
 
 HTTP_HANDLE HTTPAPI_CreateConnection(const char* hostName)
 {
-    HTTPSClient* client = NULL;
+    HttpClient* client = NULL;
 
-    if (httpsClient->connected()) {
-        // no clients available
-        LogError("No HTTPS clients available\n");
-    } else if (httpsClient->begin(hostName)) {
-        client = httpsClient;
+    if (httpsClient == NULL) {
+        httpsClient = new HttpClient(*AzureIoTHubClient::sslClient, hostName, 443);
+        httpsClient->connectionKeepAlive();
+        httpsClient->noDefaultRequestHeaders();
+        httpsClient->setHttpResponseTimeout(10000);
     } else {
-        // connection failed
-        LogError("HTTPS connection to %s failed\n", hostName);
+        httpsClient->stop();
     }
+
+    client = httpsClient;
 
     return ((HTTP_HANDLE)client);
 }
 
 void HTTPAPI_CloseConnection(HTTP_HANDLE handle)
 {
-    HTTPSClient* client = (HTTPSClient*)handle;
+    HttpClient* client = (HttpClient*)handle;
 
-    client->end();
+    client->stop();
 }
 
 static const char* HTTPRequestTypes[] = {
@@ -68,50 +67,42 @@ HTTPAPI_RESULT HTTPAPI_ExecuteRequest(HTTP_HANDLE handle,
     size_t headersCount;
     char* header;
 
-    HTTPSClient* client = (HTTPSClient*)handle;
+    HttpClient* client = (HttpClient*)handle;
 
-    if (!client->connected()) {
-        // client not connected
-        LogError("HTTPS request failed, client not connected\n");
-        return HTTPAPI_OPEN_REQUEST_FAILED;
-    }
+    client->beginRequest();
 
-    result = client->sendRequest(HTTPRequestTypes[requestType], relativePath);
-    if (!result) {
+    result = client->startRequest(relativePath, HTTPRequestTypes[requestType]);
+    if (result) {
         LogError("HTTPS send request failed\n");
         return HTTPAPI_SEND_REQUEST_FAILED;
     }
 
     HTTPHeaders_GetHeaderCount(httpHeadersHandle, &headersCount);
 
-    for (size_t i = 0; i < headersCount && result; i++) {
+    for (size_t i = 0; i < headersCount; i++) {
         HTTPHeaders_GetHeader(httpHeadersHandle, i, &header);
-        result = client->sendHeader(header);
+        client->sendHeader(header);
         free(header);
     }
 
-    if (!result) {
-        LogError("HTTPS send header failed\n");
-        return HTTPAPI_SEND_REQUEST_FAILED;
-    }
+    client->endRequest();
 
-    result = client->sendBody(content, contentLength);
-    if (!result) {
+    result = client->write(content, contentLength);
+    if (result < contentLength) {
         LogError("HTTPS send body failed\n");
         return HTTPAPI_SEND_REQUEST_FAILED;
     }
 
-    result = client->readStatus();
+    result = client->responseStatusCode();
     if (result == -1) {
         return HTTPAPI_STRING_PROCESSING_ERROR;
     }
     *statusCode = result;
 
-    while (result > 0) {
-        String headerName;
-        String headerValue;
+    while (client->headerAvailable()) {
+        String headerName = client->readHeaderName();
+        String headerValue = client->readHeaderValue();
 
-        result = client->readHeader(headerName, headerValue);
         HTTPHeaders_AddHeaderNameValuePair(responseHeadersHandle, headerName.c_str(), headerValue.c_str());
     }
 
@@ -123,7 +114,7 @@ HTTPAPI_RESULT HTTPAPI_ExecuteRequest(HTTP_HANDLE handle,
     contentLength = client->contentLength();
     if (contentLength) {
         BUFFER_pre_build(responseContent, contentLength);
-        client->readBody(BUFFER_u_char(responseContent), contentLength);
+        client->read(BUFFER_u_char(responseContent), contentLength);
     }
 
     return HTTPAPI_OK;
@@ -132,11 +123,11 @@ HTTPAPI_RESULT HTTPAPI_ExecuteRequest(HTTP_HANDLE handle,
 HTTPAPI_RESULT HTTPAPI_SetOption(HTTP_HANDLE handle, const char* optionName,
         const void* value)
 {
-    HTTPSClient* client = (HTTPSClient*)handle;
+    HttpClient* client = (HttpClient*)handle;
     HTTPAPI_RESULT result = HTTPAPI_INVALID_ARG;
 
     if (strcmp("timeout", optionName) == 0) {
-        client->setTimeout(*(const unsigned int*)value);
+        client->setHttpResponseTimeout(*(const unsigned int*)value);
 
         result = HTTPAPI_OK;
     }
