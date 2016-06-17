@@ -15,6 +15,8 @@ before_install:
   - tar xf arduino-$IDE_VERSION-linux64.tar.xz
   - mv arduino-$IDE_VERSION $HOME/arduino-ide
   - export PATH=$PATH:$HOME/arduino-ide
+  - mkdir -p $HOME/Arduino/libraries
+  - git clone https://github.com/sandeepmistry/ArduinoHttpClient.git $HOME/Arduino/libraries/ArduinoHttpClient
   - if [[ "$BOARD" =~ "arduino:samd:" ]]; then
       arduino --install-boards arduino:samd;
       arduino --install-library WiFi101;
